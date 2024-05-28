@@ -183,25 +183,45 @@ namespace HttpFileServer.ViewModels
             if (IsRunning)
                 return;
 
-            Directory.CreateDirectory(SourceDir);
-
-            FileServer = new DefaultFileServer(ListenPort, SourceDir, EanbleJsonResponse, EnableUpload);
-
-            FileServer.LogGenerated += FileServer_LogGenerated;
-            FileServer.NewReqeustIn += FileServer_NewReqeustIn;
-            FileServer.RequestOut += FileServer_RequestOut;
-
-            Status = ServerStatus.Starting;
-            FileServer.Start();
-            var ips = IPHelper.GetAllLocalIP();
-            foreach (var ip in ips)
+            try
             {
-                LogContent += $"http://{ip}:{ListenPort}/{Environment.NewLine}";
+                Directory.CreateDirectory(SourceDir);
+
+                FileServer = new DefaultFileServer(ListenPort, SourceDir, EanbleJsonResponse, EnableUpload);
+
+                FileServer.LogGenerated += FileServer_LogGenerated;
+                FileServer.NewReqeustIn += FileServer_NewReqeustIn;
+                FileServer.RequestOut += FileServer_RequestOut;
+
+                Status = ServerStatus.Starting;
+                FileServer.Start();
+                var ips = IPHelper.GetAllLocalIP();
+                foreach (var ip in ips)
+                {
+                    LogContent += $"http://{ip}:{ListenPort}/{Environment.NewLine}";
+                }
+                IsRunning = true;
+                Status = ServerStatus.Running;
+                CommandStartServer?.RaiseCanExecuteChanged();
+                CommandStopServer?.RaiseCanExecuteChanged();
             }
-            IsRunning = true;
-            Status = ServerStatus.Running;
-            CommandStartServer?.RaiseCanExecuteChanged();
-            CommandStopServer?.RaiseCanExecuteChanged();
+            catch (Exception ex)
+            {
+                try
+                {
+                    if (FileServer != null)
+                        FileServer.Stop();
+                }
+                catch{ }
+                
+                FileServer = null;
+                IsRunning = false;
+                Status = ServerStatus.Error;
+                LogContent += "Error: " + ex.Message + Environment.NewLine;
+
+                CommandStartServer?.RaiseCanExecuteChanged();
+                CommandStopServer?.RaiseCanExecuteChanged();
+            }
         }
 
         private void OnRequestStopServer()

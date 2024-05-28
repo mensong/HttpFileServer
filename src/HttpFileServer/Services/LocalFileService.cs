@@ -61,21 +61,22 @@ namespace HttpFileServer.Services
 
         private void _watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            if (File.Exists(e.FullPath))
-                RaiseParentDirContentChanged(e.FullPath);
-            else
-                RaiseDirContentChanged(e.FullPath);
+            //if (File.Exists(e.FullPath))
+            //    RaiseParentDirContentChanged(e.FullPath);
+            //else
+            //    RaiseDirContentChanged(e.FullPath);
         }
 
         private void _watcher_Created(object sender, FileSystemEventArgs e)
         {
-            //created 不做任何处理 用户访问地址时才创建对应缓存
-            //新建操作会触发父级路径的 _watcher_Changed 事件 在里面触发RaiseDirContentChanged事件
+            RaiseDirContentChanged(e.FullPath);
+            RaiseParentDirContentChanged(e.FullPath);
         }
 
         private void _watcher_Deleted(object sender, FileSystemEventArgs e)
         {
             RaisePathDeleted(e.FullPath);
+            RaiseParentDirContentChanged(e.FullPath);
         }
 
         private void _watcher_Renamed(object sender, RenamedEventArgs e)
